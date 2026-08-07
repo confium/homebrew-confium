@@ -1,0 +1,73 @@
+# Auto-bump formulae when upstream confium/confium cuts a new release tag.
+#
+# Flow:
+#   1. Upstream `release-binary.yml` produces tarballs on a tag push.
+#   2. This workflow runs ~5 min later, fetches the latest tag from
+#      confium/confium, downloads the source tarball, computes its
+#      sha256, and opens a PR updating Formula/*.rb.
+#   3. The PR auto-merges on green CI.
+
+name: Bump formulae on upstream release
+
+on:
+  schedule:
+    - cron: "15 */4 * * *"  # Every 4 hours
+  workflow_dispatch:
+  repository_dispatch:
+    types: [upstream-release]
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  bump:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Fetch latest upstream tag
+        id: latest
+        run: |
+          TAG=$(gh api repos/confium/confium/releases/latest --jq '.tag_name')
+          echo "tag=${TAG}" >> "$GITHUB_OUTPUT"
+          echo "version=${TAG#v}" >> "$GITHUB_OUTPUT"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Check if already on this version
+        id: check
+        run: |
+          CURRENT=$(grep -E '^  url' Formula/confium.rb | grep -oE 'v[0-9]+\.[0-9]+\.[0-9]+' | head -1)
+          if [ "$CURRENT" = "${{ steps.latest.outputs.tag }}" ]; then
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "skip=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Compute sha256
+        if: steps.check.outputs.skip != 'true'
+        id: sha
+        run: |
+          URL="https://github.com/confium/confium/archive/refs/tags/${{ steps.latest.outputs.tag }}.tar.gz"
+          SHA=$(curl -sL "$URL" | sha256sum | cut -d' ' -f1)
+          echo "sha=${SHA}" >> "$GITHUB_OUTPUT"
+
+      - name: Update formulae
+        if: steps.check.outputs.skip != 'true'
+        run: |
+          for f in Formula/*.rb; do
+            sed -i 's|url .*|url "https://github.com/confium/confium/archive/refs/tags/${{ steps.latest.outputs.tag }}.tar.gz"|' "$f"
+            sed -i 's|sha256 .*|sha256 "${{ steps.sha.outputs.sha }}"|' "$f"
+          done
+
+      - name: Open PR
+        if: steps.check.outputs.skip != 'true'
+        uses: peter-evans/create-pull-request@v7
+        with:
+          commit-message: "chore: bump formulae to ${{ steps.latest.outputs.tag }}"
+          title: "chore: bump formulae to ${{ steps.latest.outputs.tag }}"
+          body: |
+            Auto-bumped from upstream release [${{ steps.latest.outputs.tag }}](https://github.com/confium/confium/releases/tag/${{ steps.latest.outputs.tag }}).
+          branch: auto/bump-${{ steps.latest.outputs.tag }}
+          labels: auto-update
