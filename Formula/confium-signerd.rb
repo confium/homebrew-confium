@@ -8,8 +8,8 @@
 class ConfiumSignerd < Formula
   desc "Confium threshold signing daemon"
   homepage "https://www.confium.org/threshold/"
-  url "https://github.com/confium/confium/archive/refs/tags/v0.3.1.tar.gz"
-  sha256 "0000000000000000000000000000000000000000000000000000000000000000"
+  url "https://github.com/confium/confium/archive/refs/tags/v0.4.7.tar.gz"
+  sha256 "bd2be5ba5fda92f90e9f95557ad5c2d1ee24487720a2baaafa1e1ca44c640cb1"
   license "BSD-2-Clause"
   head "https://github.com/confium/confium.git", branch: "main"
 

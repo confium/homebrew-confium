@@ -15,9 +15,9 @@
 class Confium < Formula
   desc "Threshold-native trust infrastructure — CLI"
   homepage "https://www.confium.org/"
-  url "https://github.com/confium/confium/archive/refs/tags/v0.3.1.tar.gz"
+  url "https://github.com/confium/confium/archive/refs/tags/v0.4.7.tar.gz"
   # SHA-256 of the tarball above. PLACEHOLDER until the auto-bump workflow runs.
-  sha256 "0000000000000000000000000000000000000000000000000000000000000000"
+  sha256 "bd2be5ba5fda92f90e9f95557ad5c2d1ee24487720a2baaafa1e1ca44c640cb1"
   license "BSD-2-Clause"
   head "https://github.com/confium/confium.git", branch: "main"
 
