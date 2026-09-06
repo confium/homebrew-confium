@@ -20,6 +20,7 @@ class ConfiumSignerd < Formula
   end
 
   test do
-    assert_match "usage", shell_output("#{bin}/confium-signerd --help")
+    # clap prints "Usage:" (capital U) in --help.
+    assert_match(/Usage:/, shell_output("#{bin}/confium-signerd --help"))
   end
 end
