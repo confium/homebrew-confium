@@ -29,6 +29,7 @@ class Confium < Formula
   end
 
   test do
-    assert_match "Confium trust store framework", shell_output("#{bin}/confium --version")
+    # `--version` prints `confium <semver>` (the about string is --help text).
+    assert_match(/^confium \d+\.\d+\.\d+/, shell_output("#{bin}/confium --version"))
   end
 end

@@ -71,3 +71,15 @@ jobs:
             Auto-bumped from upstream release [${{ steps.latest.outputs.tag }}](https://github.com/confium/confium/releases/tag/${{ steps.latest.outputs.tag }}).
           branch: auto/bump-${{ steps.latest.outputs.tag }}
           labels: auto-update
+
+      - name: Enable auto-merge
+        # The bump is mechanical (url + sha256 of the latest upstream
+        # release tarball); without this the PR sat open indefinitely
+        # — the first bump to v0.4.7 had to be merged by hand.
+        if: steps.check.outputs.skip != 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh pr merge --auto --rebase \
+            "auto/bump-${{ steps.latest.outputs.tag }}" \
+            || echo "auto-merge not available (checks pending or protection) — PR stays open"
